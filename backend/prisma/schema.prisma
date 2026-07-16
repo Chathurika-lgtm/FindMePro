@@ -1,13 +1,869 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
+
+
+
+enum UserRole {
+  ADMIN
+  CUSTOMER
+  WORKER
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum VerificationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum AvailabilityStatus {
+  AVAILABLE
+  UNAVAILABLE
+  VACATION
+}
+
+enum BookingStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  ON_THE_WAY
+  WORKING
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  LANKAQR
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum TransactionType {
+  CREDIT
+  DEBIT
+}
+
+enum NotificationType {
+  BOOKING
+  PAYMENT
+  CHAT
+  SYSTEM
+  REVIEW
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  FILE
+}
+
+enum ReportStatus {
+  PENDING
+  UNDER_REVIEW
+  RESOLVED
+  REJECTED
+}
+
+enum DocumentType {
+  NIC_FRONT
+  NIC_BACK
+  SELFIE
+  CERTIFICATE
+}
+
+enum DocumentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+
+
+
+
+model User {
+  id              String      @id @default(uuid()) @db.Uuid
+
+  fullName        String      @db.VarChar(150)
+
+  email           String      @unique @db.VarChar(255)
+
+  password        String
+
+  phone           String?     @unique @db.VarChar(20)
+
+  role            UserRole
+
+  status          UserStatus  @default(ACTIVE)
+
+  gender          Gender?
+
+  profileImage    String?
+
+  emailVerified   Boolean     @default(false)
+
+  phoneVerified   Boolean     @default(false)
+
+  lastLogin       DateTime?
+
+  customerProfile CustomerProfile?
+
+  workerProfile   WorkerProfile?
+
+  notifications   Notification[]
+
+  sentMessages    Message[]   @relation("Sender")
+
+  receivedMessages Message[]  @relation("Receiver")
+
+  reportsCreated  Report[]    @relation("Reporter")
+
+  reportsAgainst  Report[]    @relation("ReportedUser")
+
+  createdAt       DateTime    @default(now())
+
+  updatedAt       DateTime    @updatedAt
+  deletedAt DateTime?
+
+  @@map("users")
+
+  @@index([role])
+
+  @@index([status])
+}
+
+
+
+
+model CustomerProfile {
+
+  id String @id @default(uuid()) @db.Uuid
+
+  userId String @unique @db.Uuid
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  address String?
+
+  city String?
+
+  district String?
+
+  postalCode String?
+
+  latitude Decimal? @db.Decimal(10,7)
+
+  longitude Decimal? @db.Decimal(10,7)
+
+  bookings Booking[]
+
+  reviews Review[]
+
+  favorites Favorite[]
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+  @@index([city])
+
+  @@index([latitude, longitude])
+
+  @@index([district])
+
+  @@map("customer_profiles")
+}
+
+
+
+
+
+model WorkerProfile {
+
+  id String @id @default(uuid()) @db.Uuid
+
+  userId String @unique @db.Uuid
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  bio String?
+
+  experienceYears Int @default(0)
+
+  averageRating Float @default(0)
+
+  totalReviews Int @default(0)
+
+  completedJobs Int @default(0)
+
+  verificationStatus VerificationStatus @default(PENDING)
+
+  isAvailable Boolean @default(true)
+
+  services WorkerService[]
+
+  favorites Favorite[]
+
+  skills WorkerSkill[]
+
+  gallery WorkerGallery[]
+
+  documents WorkerDocument[]
+
+  availability WorkerAvailability[]
+
+  locations WorkerLocation[]
+
+  wallet Wallet?
+
+  bookings Booking[]
+
+  reviews Review[]
+
+
+  averageResponseMinutes Int?
+
+  lastSeen DateTime?
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+  @@index([verificationStatus])
+
+  @@index([averageRating])
+
+  @@index([isAvailable])
+
+  @@map("worker_profiles")
+
+  @@index([averageResponseMinutes])
+}
+
+
+
+
+
+model Category {
+
+  id String @id @default(uuid()) @db.Uuid
+
+  name String @unique
+
+  icon String?
+
+  description String?
+
+  isActive Boolean @default(true)
+
+  slug String @unique
+
+  workerServices WorkerService[]
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+  @@map("categories")
+
+  @@index([slug])
+}
+
+
+
+
+
+model WorkerService {
+
+  id String @id @default(uuid()) @db.Uuid
+
+  workerId String @db.Uuid
+
+  categoryId String @db.Uuid
+
+  worker WorkerProfile @relation(fields: [workerId], references: [id], onDelete: Cascade)
+
+  category Category @relation(fields: [categoryId], references: [id])
+
+  servicePrice Decimal @db.Decimal(10,2)
+
+  serviceDescription String?
+
+  experienceYears Int @default(0)
+
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+  bookings Booking[]
+
+
+  @@unique([workerId, categoryId])
+
+  @@index([workerId, categoryId])
+
+  @@map("worker_services")
+}
+
+
+
+
+
+model Skill {
+
+  id String @id @default(uuid()) @db.Uuid
+
+  name String @unique
+
+  description String?
+
+  workerSkills WorkerSkill[]
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+  @@map("skills")
+}
+
+
+
+
+
+model WorkerSkill {
+
+  id String @id @default(uuid()) @db.Uuid
+
+  workerId String @db.Uuid
+
+  skillId String @db.Uuid
+
+  worker WorkerProfile @relation(fields:[workerId], references:[id], onDelete:Cascade)
+
+  skill Skill @relation(fields:[skillId], references:[id])
+
+  createdAt DateTime @default(now())
+
+  @@unique([workerId, skillId])
+
+  @@index([workerId])
+
+  @@index([skillId])
+
+  @@map("worker_skills")
+}
+
+
+
+
+
+
+model WorkerGallery {
+
+  id String @id @default(uuid()) @db.Uuid
+
+  workerId String @db.Uuid
+
+  worker WorkerProfile @relation(fields:[workerId], references:[id], onDelete:Cascade)
+
+  imageUrl String
+
+  title String?
+
+  displayOrder Int @default(0)
+
+  description String?
+
+  createdAt DateTime @default(now())
+
+  @@index([workerId])
+
+  @@map("worker_gallery")
+}
+
+
+
+
+
+model WorkerDocument {
+
+  id String @id @default(uuid()) @db.Uuid
+
+  workerId String @db.Uuid
+
+  worker WorkerProfile @relation(fields:[workerId], references:[id], onDelete:Cascade)
+
+  type DocumentType
+
+  documentUrl String
+
+  status DocumentStatus @default(PENDING)
+
+  verifiedAt DateTime?
+
+  remarks String?
+
+  createdAt DateTime @default(now())
+
+  expiryDate DateTime?
+
+  @@index([workerId])
+
+  @@index([status])
+
+  @@map("worker_documents")
+}
+
+
+
+
+model WorkerAvailability {
+
+  id String @id @default(uuid()) @db.Uuid
+
+  workerId String @db.Uuid
+
+  worker WorkerProfile @relation(fields:[workerId], references:[id], onDelete:Cascade)
+
+  dayOfWeek Int // 1-7
+
+startTime String @db.VarChar(5)
+
+endTime String @db.VarChar(5)
+
+  status AvailabilityStatus
+
+  createdAt DateTime @default(now())
+
+  @@index([workerId])
+
+  @@map("worker_availability")
+}
+
+
+
+
+model WorkerLocation {
+
+  id String @id @default(uuid()) @db.Uuid
+
+  workerId String @db.Uuid
+
+  worker WorkerProfile @relation(fields:[workerId], references:[id], onDelete:Cascade)
+
+  latitude Decimal @db.Decimal(10,7)
+
+  longitude Decimal @db.Decimal(10,7)
+
+  recordedAt DateTime @default(now())
+
+  @@index([workerId])
+
+  @@index([latitude, longitude])
+
+  @@map("worker_locations")
+}
+
+
+
+
+
+
+model Booking {
+
+  id              String   @id @default(uuid()) @db.Uuid
+
+  customerId      String   @db.Uuid
+
+  workerId        String   @db.Uuid
+
+  workerServiceId String   @db.Uuid
+
+  customer CustomerProfile @relation(fields:[customerId], references:[id])
+
+  worker WorkerProfile @relation(fields:[workerId], references:[id])
+
+  workerService WorkerService @relation(fields:[workerServiceId], references:[id])
+
+  bookingDate DateTime
+
+  estimatedDuration Int?
+
+  description String?
+
+  address String
+
+  latitude Decimal @db.Decimal(10,7)
+
+  longitude Decimal @db.Decimal(10,7)
+
+  totalAmount Decimal @db.Decimal(10,2)
+
+  platformFee Decimal @db.Decimal(10,2)
+
+  workerAmount Decimal @db.Decimal(10,2)
+
+  status BookingStatus @default(PENDING)
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+  referenceImage String?
+
+  bookingStatusHistory BookingStatusHistory[]
+
+  review Review?
+
+  paymentTransactions PaymentTransaction[]
+
+  walletTransactions WalletTransaction[]
+
+  chatRoom ChatRoom?
+
+  reports Report[]
+
+  @@index([customerId])
+
+  @@index([workerServiceId])
+
+  @@index([bookingDate])
+
+  @@index([workerId])
+
+  @@index([status])
+
+  @@map("bookings")
+}
+
+
+
+
+
+
+model BookingStatusHistory {
+
+  id String @id @default(uuid()) @db.Uuid
+
+  bookingId String @db.Uuid
+
+  booking Booking @relation(fields:[bookingId], references:[id], onDelete:Cascade)
+
+  status BookingStatus
+
+  remarks String?
+
+  changedAt DateTime @default(now())
+
+  @@index([bookingId])
+
+  @@map("booking_status_history")
+}
+
+
+
+
+
+
+model Review {
+
+  id String @id @default(uuid()) @db.Uuid
+
+  bookingId String @unique @db.Uuid
+
+  customerId String @db.Uuid
+
+  workerId String @db.Uuid
+
+  booking Booking @relation(fields:[bookingId], references:[id])
+
+  customer CustomerProfile @relation(fields:[customerId], references:[id])
+
+  worker WorkerProfile @relation(fields:[workerId], references:[id])
+
+  rating Int
+
+  comment String?
+
+  createdAt DateTime @default(now())
+
+  @@index([customerId])
+
+  @@index([workerId])
+
+  @@index([rating])
+
+  @@map("reviews")
+}
+
+
+
+
+
+
+model Wallet {
+  id String @id @default(uuid()) @db.Uuid
+
+  workerId String @unique @db.Uuid
+
+  worker WorkerProfile @relation(fields: [workerId], references: [id], onDelete: Cascade)
+
+  balance Decimal @default(0) @db.Decimal(10,2)
+
+  transactions WalletTransaction[]
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+  @@map("wallets")
+}
+
+
+
+
+
+model WalletTransaction {
+
+  id String @id @default(uuid()) @db.Uuid
+
+  walletId String @db.Uuid
+
+  bookingId String? @db.Uuid
+
+  wallet Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  booking Booking? @relation(fields: [bookingId], references: [id])
+
+  type TransactionType
+
+  amount Decimal @db.Decimal(10,2)
+
+  description String?
+
+  createdAt DateTime @default(now())
+
+  @@index([walletId])
+
+  @@index([bookingId])
+
+  @@map("wallet_transactions")
+}
+
+
+
+
+model PaymentTransaction {
+
+  id String @id @default(uuid()) @db.Uuid
+
+  bookingId String @db.Uuid
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  amount Decimal @db.Decimal(10,2)
+
+  paymentMethod PaymentMethod
+
+  paymentStatus PaymentStatus @default(PENDING)
+
+  transactionReference String?
+
+  paidAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([bookingId])
+
+  @@index([paymentMethod])
+
+  @@index([paymentStatus])
+
+  @@map("payment_transactions")
+}
+
+
+
+
+
+model ChatRoom {
+
+  id String @id @default(uuid()) @db.Uuid
+
+  bookingId String @unique @db.Uuid
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  messages Message[]
+
+  createdAt DateTime @default(now())
+
+  @@map("chat_rooms")
+}
+
+
+
+
+
+
+model Message {
+
+  id String @id @default(uuid()) @db.Uuid
+
+  chatRoomId String @db.Uuid
+
+  senderId String @db.Uuid
+
+  receiverId String @db.Uuid
+
+  chatRoom ChatRoom @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
+
+  sender User @relation("Sender", fields: [senderId], references: [id])
+
+  receiver User @relation("Receiver", fields: [receiverId], references: [id])
+
+  type MessageType @default(TEXT)
+
+  message String?
+
+  attachmentUrl String?
+
+  isRead Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  editedAt DateTime?
+
+  @@index([chatRoomId])
+
+  @@index([senderId])
+
+  @@index([receiverId])
+
+  @@map("messages")
+}
+
+
+
+
+
+
+model Notification {
+
+  id String @id @default(uuid()) @db.Uuid
+
+  userId String @db.Uuid
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  title String
+
+  body String
+
+  type NotificationType
+
+  isRead Boolean @default(false)
+
+  link String?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+
+  @@index([isRead])
+
+  @@map("notifications")
+}
+
+
+
+
+
+
+model Favorite {
+
+  id String @id @default(uuid()) @db.Uuid
+
+  customerId String @db.Uuid
+
+  workerId String @db.Uuid
+
+  customer CustomerProfile @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  worker WorkerProfile @relation(fields: [workerId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([customerId, workerId])
+
+  @@map("favorites")
+}
+
+
+
+
+
+model Report {
+
+  id String @id @default(uuid()) @db.Uuid
+
+  reporterId String @db.Uuid
+
+  reportedUserId String @db.Uuid
+
+  bookingId String? @db.Uuid
+
+  reporter User @relation("Reporter", fields: [reporterId], references: [id])
+
+  reportedUser User @relation("ReportedUser", fields: [reportedUserId], references: [id])
+
+  booking Booking? @relation(fields: [bookingId], references: [id])
+
+  reason String
+
+  description String?
+
+  status ReportStatus @default(PENDING)
+
+  createdAt DateTime @default(now())
+
+  @@index([reporterId])
+
+  @@index([reportedUserId])
+
+  @@index([status])
+
+  @@map("reports")
+}
+
+
+
+
+
+
