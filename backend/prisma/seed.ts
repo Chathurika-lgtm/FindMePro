@@ -63,6 +63,34 @@ async function seedAdmin() {
   console.log("✅ Admin user seeded successfully.");
 }
 
+async function seedWorker() {
+  console.log("👷 Seeding Worker User...");
+
+  const hashedPassword = await bcrypt.hash("Admin@123", 10);
+
+  await prisma.user.upsert({
+    where: {
+      email: "worker@findmepro.lk",
+    },
+    update: {},
+    create: {
+      fullName: "Test Worker",
+      email: "worker@findmepro.lk",
+      password: hashedPassword,
+      phone: "0711111111",
+      role: "WORKER",
+      status: "ACTIVE",
+      emailVerified: true,
+      phoneVerified: true,
+    },
+  });
+
+  console.log("✅ Worker user seeded successfully.");
+}
+
+
+
+
 async function seedCategories() {
   console.log("📂 Seeding Categories...");
 
@@ -112,6 +140,8 @@ async function main() {
   await seedSkills();
 
   await seedAdmin();
+
+  await seedWorker();
 
   console.log("🎉 Database seeded successfully.");
 }

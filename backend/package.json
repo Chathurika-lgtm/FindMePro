@@ -19,9 +19,6 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
-  
-
-
   "dependencies": {
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.4",
@@ -53,6 +50,7 @@
     "@types/bcrypt": "^6.0.0",
     "@types/express": "^5.0.0",
     "@types/jest": "^30.0.0",
+    "@types/multer": "^2.2.0",
     "@types/node": "^24.0.0",
     "@types/passport-jwt": "^4.0.1",
     "@types/supertest": "^7.0.0",
@@ -89,11 +87,8 @@
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"
-    
-    
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
   }
-  
 }
