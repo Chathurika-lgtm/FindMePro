@@ -5,6 +5,7 @@ import {
   Post,
   UseGuards,
   Put,
+  Get
 } from '@nestjs/common';
 
 import { PaymentService } from './payment.service';
@@ -47,5 +48,42 @@ export class PaymentController {
     return this.paymentService.markAsPaid(
         paymentId,
     );
+    }
+        @Get('my-payments')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(UserRole.CUSTOMER)
+    getMyPayments(
+      @CurrentUser() user: any,
+    ) {
+      return this.paymentService.getMyPayments(
+        user.id,
+      );
+    }
+
+
+        @Get(':paymentId')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(UserRole.CUSTOMER)
+    getPaymentDetails(
+      @CurrentUser() user: any,
+      @Param('paymentId') paymentId: string,
+    ) {
+      return this.paymentService.getPaymentDetails(
+        user.id,
+        paymentId,
+      );
+    }
+
+
+
+        @Get('customer/summary')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(UserRole.CUSTOMER)
+    getCustomerPaymentSummary(
+      @CurrentUser() user: any,
+    ) {
+      return this.paymentService.getCustomerPaymentSummary(
+        user.id,
+      );
     }
 }

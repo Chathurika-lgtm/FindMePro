@@ -194,4 +194,244 @@ export class PaymentService {
   });
 
 }
+
+
+async getMyPayments(userId: string) {
+
+  // Find customer profile
+  const customer =
+    await this.prisma.customerProfile.findUnique({
+      where: {
+        userId,
+      },
+    });
+
+  if (!customer) {
+    throw new BadRequestException(
+      'Customer profile not found',
+    );
+  }
+
+  return this.prisma.paymentTransaction.findMany({
+
+    where: {
+      booking: {
+        customerId: customer.id,
+      },
+    },
+
+    include: {
+
+      booking: {
+
+        include: {
+
+          worker: {
+
+            include: {
+
+              user: {
+
+                select: {
+
+                  fullName: true,
+                  profileImage: true,
+
+                },
+
+              },
+
+            },
+
+          },
+
+          workerService: {
+
+            include: {
+
+              category: {
+
+                select: {
+
+                  name: true,
+
+                },
+
+              },
+
+            },
+
+          },
+
+        },
+
+      },
+
+    },
+
+    orderBy: {
+
+      createdAt: 'desc',
+
+    },
+
+  });
+
+}
+
+async getPaymentDetails(
+  userId: string,
+  paymentId: string,
+) {
+
+  // Find customer profile
+  const customer =
+    await this.prisma.customerProfile.findUnique({
+      where: {
+        userId,
+      },
+    });
+
+  if (!customer) {
+    throw new BadRequestException(
+      'Customer profile not found',
+    );
+  }
+
+  // Find payment
+  const payment =
+    await this.prisma.paymentTransaction.findFirst({
+
+      where: {
+
+        id: paymentId,
+
+        booking: {
+          customerId: customer.id,
+        },
+
+      },
+
+      include: {
+
+        booking: {
+
+          include: {
+
+            worker: {
+
+              include: {
+
+                user: {
+
+                  select: {
+
+                    fullName: true,
+                    email: true,
+                    phone: true,
+                    profileImage: true,
+
+                  },
+
+                },
+
+              },
+
+            },
+
+            workerService: {
+
+              include: {
+
+                category: true,
+
+              },
+
+            },
+
+          },
+
+        },
+
+      },
+
+    });
+
+  if (!payment) {
+    throw new BadRequestException(
+      'Payment not found',
+    );
+  }
+
+  return payment;
+
+}
+
+
+async getCustomerPaymentSummary(
+  userId: string,
+) {
+
+  const customer =
+    await this.prisma.customerProfile.findUnique({
+      where: {
+        userId,
+      },
+    });
+
+  if (!customer) {
+    throw new BadRequestException(
+      'Customer profile not found',
+    );
+  }
+
+  const payments =
+    await this.prisma.paymentTransaction.findMany({
+
+      where: {
+        booking: {
+          customerId: customer.id,
+        },
+      },
+
+    });
+
+  const totalPayments = payments
+    .filter(p => p.paymentStatus === 'PAID')
+    .reduce(
+      (sum, p) => sum + Number(p.amount),
+      0,
+    );
+
+  const completedPayments =
+    payments.filter(
+      p => p.paymentStatus === 'PAID',
+    ).length;
+
+  const pendingPayments =
+    payments.filter(
+      p => p.paymentStatus === 'PENDING',
+    ).length;
+
+  const failedPayments =
+    payments.filter(
+      p => p.paymentStatus === 'FAILED',
+    ).length;
+
+  return {
+
+    totalPayments,
+
+    completedPayments,
+
+    pendingPayments,
+
+    failedPayments,
+
+    totalTransactions:
+      payments.length,
+
+  };
+
+}
 }

@@ -12,6 +12,10 @@ import { BookingModule } from './booking/booking.module';
 import { PaymentModule } from './payment/payment.module';
 import { WalletModule } from './wallet/wallet.module';
 import { EarningsModule } from './earnings/earnings.module';
+import { ReviewModule } from './review/review.module';
+import { NotificationModule } from './notification/notification.module';
+import { AdminModule } from './admin/admin.module';
+import { ReportModule } from './report/report.module';
 
 
 
@@ -35,6 +39,10 @@ import { EarningsModule } from './earnings/earnings.module';
     PaymentModule,
     WalletModule,
     EarningsModule,
+    ReviewModule,
+    NotificationModule,
+    AdminModule,
+    ReportModule,
   ],
 })
 export class AppModule {}
