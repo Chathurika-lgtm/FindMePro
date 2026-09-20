@@ -6,3 +6,5 @@ coverage
 .next
 .env.local
 frontend-old/
+
+/project video/

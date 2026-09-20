@@ -12,6 +12,14 @@ export interface LoginData {
   password: string;
 }
 
+export interface UpdateProfileData {
+  fullName?: string;
+  email?: string;
+  phone?: string;
+  gender?: "MALE" | "FEMALE";
+  profileImage?: string;
+}
+
 export interface AuthUser {
   id: string;
   fullName: string;
@@ -90,6 +98,40 @@ export const getProfile = async () => {
   return response.data;
 };
 
+// =========================
+// UPDATE PROFILE
+// =========================
+
+export const updateProfile = async (
+  data: UpdateProfileData,
+) => {
+  const response = await api.put(
+    "/auth/profile",
+    data,
+  );
+
+  return response.data;
+};
+
+export const uploadProfileImage = async (
+  file: File,
+) => {
+  const formData = new FormData();
+
+  formData.append("image", file);
+
+  const response = await api.post(
+    "/auth/profile/image",
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    },
+  );
+
+  return response.data;
+};
 // =========================
 // ADMIN
 // =========================

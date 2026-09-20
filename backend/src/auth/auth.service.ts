@@ -9,6 +9,7 @@ import { JwtService } from '@nestjs/jwt';
 
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 
 import { UserRole } from '@prisma/client';
 
@@ -57,7 +58,6 @@ export class AuthService {
           fullName,
           email,
           password: hashedPassword,
-
           role: UserRole.CUSTOMER,
 
           customerProfile: {
@@ -89,10 +89,211 @@ export class AuthService {
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
         deletedAt: user.deletedAt,
-
         customerProfile:
           user.customerProfile,
       },
+    };
+  }
+
+  // =========================
+  // GET PROFILE
+  // =========================
+
+  async getProfile(userId: string) {
+    const user =
+      await this.prisma.user.findUnique({
+        where: {
+          id: userId,
+        },
+
+        select: {
+          id: true,
+          fullName: true,
+          email: true,
+          phone: true,
+          role: true,
+          status: true,
+          gender: true,
+          profileImage: true,
+          emailVerified: true,
+          phoneVerified: true,
+          lastLogin: true,
+          createdAt: true,
+          updatedAt: true,
+          deletedAt: true,
+
+          customerProfile: true,
+        },
+      });
+
+    if (!user) {
+      throw new UnauthorizedException(
+        'User not found',
+      );
+    }
+
+    return {
+      message: 'Profile retrieved successfully',
+      user,
+    };
+  }
+
+  // =========================
+  // UPDATE PROFILE
+  // =========================
+
+  async updateProfile(
+    userId: string,
+    dto: UpdateProfileDto,
+  ) {
+    const user =
+      await this.prisma.user.findUnique({
+        where: {
+          id: userId,
+        },
+      });
+
+    if (!user) {
+      throw new UnauthorizedException(
+        'User not found',
+      );
+    }
+
+    // Check whether email is already used
+    // by another user
+    if (
+      dto.email &&
+      dto.email !== user.email
+    ) {
+      const existingUser =
+        await this.prisma.user.findUnique({
+          where: {
+            email: dto.email,
+          },
+        });
+
+      if (existingUser) {
+        throw new ConflictException(
+          'Email is already registered',
+        );
+      }
+    }
+
+    // Update user
+    const updatedUser =
+      await this.prisma.user.update({
+        where: {
+          id: userId,
+        },
+
+        data: {
+          ...(dto.fullName !== undefined && {
+            fullName: dto.fullName,
+          }),
+
+          ...(dto.email !== undefined && {
+            email: dto.email,
+          }),
+
+          ...(dto.phone !== undefined && {
+            phone: dto.phone,
+          }),
+
+          ...(dto.gender !== undefined && {
+            gender: dto.gender,
+          }),
+
+          ...(dto.profileImage !== undefined && {
+            profileImage: dto.profileImage,
+          }),
+        },
+
+        select: {
+          id: true,
+          fullName: true,
+          email: true,
+          phone: true,
+          role: true,
+          status: true,
+          gender: true,
+          profileImage: true,
+          emailVerified: true,
+          phoneVerified: true,
+          lastLogin: true,
+          createdAt: true,
+          updatedAt: true,
+          deletedAt: true,
+
+          customerProfile: true,
+        },
+      });
+
+    return {
+      message: 'Profile updated successfully',
+      user: updatedUser,
+    };
+  }
+
+  // =========================
+  // UPLOAD PROFILE IMAGE
+  // =========================
+
+  async uploadProfileImage(
+    userId: string,
+    filename: string,
+  ) {
+    const user =
+      await this.prisma.user.findUnique({
+        where: {
+          id: userId,
+        },
+      });
+
+    if (!user) {
+      throw new UnauthorizedException(
+        'User not found',
+      );
+    }
+
+    // Image URL saved in database
+    const profileImage =
+      `/uploads/profile-images/${filename}`;
+
+    const updatedUser =
+      await this.prisma.user.update({
+        where: {
+          id: userId,
+        },
+
+        data: {
+          profileImage,
+        },
+
+        select: {
+          id: true,
+          fullName: true,
+          email: true,
+          phone: true,
+          role: true,
+          status: true,
+          gender: true,
+          profileImage: true,
+          emailVerified: true,
+          phoneVerified: true,
+          lastLogin: true,
+          createdAt: true,
+          updatedAt: true,
+          deletedAt: true,
+
+          customerProfile: true,
+        },
+      });
+
+    return {
+      message:
+        'Profile image uploaded successfully',
+
+      user: updatedUser,
     };
   }
 

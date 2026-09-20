@@ -1,7 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getProfile } from "@/services/auth.service";
+
+import {
+  getProfile,
+  updateProfile,
+  uploadProfileImage,
+} from "@/services/auth.service";
+
 import {
   getCustomerProfile,
   updateCustomerProfile,
@@ -20,6 +26,7 @@ interface UserProfile {
   phoneVerified?: boolean;
   lastLogin?: string | null;
   createdAt?: string;
+  updatedAt?: string;
 }
 
 interface CustomerProfile {
@@ -34,27 +41,101 @@ interface CustomerProfile {
 }
 
 export default function ProfilePage() {
-  const [user, setUser] = useState<UserProfile | null>(null);
+  const [user, setUser] =
+    useState<UserProfile | null>(null);
 
   const [customerProfile, setCustomerProfile] =
     useState<CustomerProfile | null>(null);
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] =
+    useState(true);
 
-  const [error, setError] = useState("");
+  const [error, setError] =
+    useState("");
 
-  const [editMode, setEditMode] = useState(false);
+  const [editMode, setEditMode] =
+    useState(false);
 
-  const [saving, setSaving] = useState(false);
+  const [saving, setSaving] =
+    useState(false);
 
-  const [success, setSuccess] = useState("");
+  const [success, setSuccess] =
+    useState("");
 
-  const [address, setAddress] = useState("");
-  const [city, setCity] = useState("");
-  const [district, setDistrict] = useState("");
-  const [postalCode, setPostalCode] = useState("");
-  const [latitude, setLatitude] = useState("");
-  const [longitude, setLongitude] = useState("");
+  // =========================
+  // ACCOUNT INFORMATION
+  // =========================
+
+  const [fullName, setFullName] =
+    useState("");
+
+  const [email, setEmail] =
+    useState("");
+
+  const [phone, setPhone] =
+    useState("");
+
+  const [gender, setGender] =
+    useState<string>("");
+
+  const [profileImage, setProfileImage] =
+    useState("");
+
+  const [profileImageFile, setProfileImageFile] =
+    useState<File | null>(null);
+
+  const [profileImagePreview, setProfileImagePreview] =
+    useState("");
+
+  // =========================
+  // CUSTOMER INFORMATION
+  // =========================
+
+  const [address, setAddress] =
+    useState("");
+
+  const [city, setCity] =
+    useState("");
+
+  const [district, setDistrict] =
+    useState("");
+
+  const [postalCode, setPostalCode] =
+    useState("");
+
+  const [latitude, setLatitude] =
+    useState("");
+
+  const [longitude, setLongitude] =
+    useState("");
+
+  // =========================
+  // IMAGE URL
+  // =========================
+
+  const getProfileImageUrl = (
+    imagePath: string | null | undefined,
+  ) => {
+    if (!imagePath) {
+      return "";
+    }
+
+    if (
+      imagePath.startsWith("http://") ||
+      imagePath.startsWith("https://")
+    ) {
+      return imagePath;
+    }
+
+    const apiUrl =
+      process.env.NEXT_PUBLIC_API_URL;
+
+    if (!apiUrl) {
+      return imagePath;
+    }
+
+    return `${apiUrl}${imagePath}`;
+  };
 
   // =========================
   // LOAD PROFILE
@@ -66,52 +147,113 @@ export default function ProfilePage() {
         setLoading(true);
         setError("");
 
-        // Main user profile
-        const userData = await getProfile();
+        const userData =
+          await getProfile();
 
-        console.log("Profile data:", userData);
+        console.log(
+          "Profile data:",
+          userData,
+        );
 
-        setUser(userData.user ?? userData);
+        const currentUser =
+          userData.user ?? userData;
 
-        // Customer profile
-        try {
-          const customerData = await getCustomerProfile();
+        setUser(currentUser);
 
-          console.log(
-            "Customer profile data:",
-            customerData,
-          );
+        setFullName(
+          currentUser.fullName ?? "",
+        );
 
-          setCustomerProfile(customerData);
+        setEmail(
+          currentUser.email ?? "",
+        );
 
-          setAddress(customerData.address ?? "");
-          setCity(customerData.city ?? "");
-          setDistrict(customerData.district ?? "");
-          setPostalCode(customerData.postalCode ?? "");
+        setPhone(
+          currentUser.phone ?? "",
+        );
 
-          setLatitude(
-            customerData.latitude !== null &&
-              customerData.latitude !== undefined
-              ? String(customerData.latitude)
-              : "",
-          );
+        setGender(
+          currentUser.gender ?? "",
+        );
 
-          setLongitude(
-            customerData.longitude !== null &&
-              customerData.longitude !== undefined
-              ? String(customerData.longitude)
-              : "",
-          );
-        } catch (customerError) {
-          console.log(
-            "Customer profile not available:",
-            customerError,
-          );
+        setProfileImage(
+          currentUser.profileImage ?? "",
+        );
+
+        // =========================
+        // CUSTOMER PROFILE
+        // =========================
+
+        if (
+          currentUser.role ===
+          "CUSTOMER"
+        ) {
+          try {
+            const customerData =
+              await getCustomerProfile();
+
+            console.log(
+              "Customer profile data:",
+              customerData,
+            );
+
+            setCustomerProfile(
+              customerData,
+            );
+
+            setAddress(
+              customerData.address ?? "",
+            );
+
+            setCity(
+              customerData.city ?? "",
+            );
+
+            setDistrict(
+              customerData.district ?? "",
+            );
+
+            setPostalCode(
+              customerData.postalCode ?? "",
+            );
+
+            setLatitude(
+              customerData.latitude !==
+                null &&
+              customerData.latitude !==
+                undefined
+                ? String(
+                    customerData.latitude,
+                  )
+                : "",
+            );
+
+            setLongitude(
+              customerData.longitude !==
+                null &&
+              customerData.longitude !==
+                undefined
+                ? String(
+                    customerData.longitude,
+                  )
+                : "",
+            );
+          } catch (customerError) {
+            console.log(
+              "Customer profile not available:",
+              customerError,
+            );
+          }
         }
       } catch (err) {
-        console.error("Profile loading error:", err);
+        console.error(
+          "Profile loading error:",
+          err,
+        );
 
-        setError("Unable to load profile.");
+        setError(
+          "Unable to load profile.",
+        );
       } finally {
         setLoading(false);
       }
@@ -121,40 +263,112 @@ export default function ProfilePage() {
   }, []);
 
   // =========================
+  // IMAGE PREVIEW
+  // =========================
+
+  useEffect(() => {
+    if (!profileImageFile) {
+      setProfileImagePreview("");
+      return;
+    }
+
+    const previewUrl =
+      URL.createObjectURL(
+        profileImageFile,
+      );
+
+    setProfileImagePreview(
+      previewUrl,
+    );
+
+    return () => {
+      URL.revokeObjectURL(
+        previewUrl,
+      );
+    };
+  }, [profileImageFile]);
+
+  // =========================
   // EDIT PROFILE
   // =========================
 
   const handleEditProfile = () => {
     setSuccess("");
     setError("");
+    setProfileImageFile(null);
+    setProfileImagePreview("");
     setEditMode(true);
   };
 
   // =========================
-  // CANCEL EDIT
+  // CANCEL
   // =========================
 
   const handleCancel = () => {
+    if (user) {
+      setFullName(
+        user.fullName ?? "",
+      );
+
+      setEmail(
+        user.email ?? "",
+      );
+
+      setPhone(
+        user.phone ?? "",
+      );
+
+      setGender(
+        user.gender ?? "",
+      );
+
+      setProfileImage(
+        user.profileImage ?? "",
+      );
+    }
+
     if (customerProfile) {
-      setAddress(customerProfile.address ?? "");
-      setCity(customerProfile.city ?? "");
-      setDistrict(customerProfile.district ?? "");
-      setPostalCode(customerProfile.postalCode ?? "");
+      setAddress(
+        customerProfile.address ?? "",
+      );
+
+      setCity(
+        customerProfile.city ?? "",
+      );
+
+      setDistrict(
+        customerProfile.district ?? "",
+      );
+
+      setPostalCode(
+        customerProfile.postalCode ?? "",
+      );
 
       setLatitude(
-        customerProfile.latitude !== null &&
-          customerProfile.latitude !== undefined
-          ? String(customerProfile.latitude)
+        customerProfile.latitude !==
+          null &&
+        customerProfile.latitude !==
+          undefined
+          ? String(
+              customerProfile.latitude,
+            )
           : "",
       );
 
       setLongitude(
-        customerProfile.longitude !== null &&
-          customerProfile.longitude !== undefined
-          ? String(customerProfile.longitude)
+        customerProfile.longitude !==
+          null &&
+        customerProfile.longitude !==
+          undefined
+          ? String(
+              customerProfile.longitude,
+            )
           : "",
       );
     }
+
+    setProfileImageFile(null);
+    setProfileImagePreview("");
 
     setError("");
     setSuccess("");
@@ -171,57 +385,214 @@ export default function ProfilePage() {
       setError("");
       setSuccess("");
 
-      const data = {
-        address: address.trim() || undefined,
-        city: city.trim() || undefined,
-        district: district.trim() || undefined,
-        postalCode: postalCode.trim() || undefined,
-        latitude:
-          latitude.trim() !== ""
-            ? Number(latitude)
-            : undefined,
-        longitude:
-          longitude.trim() !== ""
-            ? Number(longitude)
-            : undefined,
-      };
+      // =========================
+      // 1. UPLOAD IMAGE
+      // =========================
 
-      console.log("Updating customer profile:", data);
+      let finalProfileImage =
+        profileImage;
 
-      const updatedProfile =
-        await updateCustomerProfile(data);
+      if (profileImageFile) {
+        console.log(
+          "Uploading profile image:",
+          profileImageFile.name,
+        );
 
-      console.log(
-        "Customer profile updated:",
-        updatedProfile,
+        const imageResponse =
+          await uploadProfileImage(
+            profileImageFile,
+          );
+
+        console.log(
+          "Profile image uploaded:",
+          imageResponse,
+        );
+
+        finalProfileImage =
+          imageResponse?.user
+            ?.profileImage ?? "";
+
+        setProfileImage(
+          finalProfileImage,
+        );
+
+        setProfileImageFile(null);
+        setProfileImagePreview("");
+      }
+
+      // =========================
+      // 2. UPDATE ACCOUNT
+      // =========================
+
+      const accountData = {
+  fullName: fullName.trim() || undefined,
+
+  email: email.trim() || undefined,
+
+  phone: phone.trim() || undefined,
+
+  gender:
+    gender === "MALE" || gender === "FEMALE"
+      ? (gender as "MALE" | "FEMALE")
+      : undefined,
+};
+
+console.log(
+  "Updating account profile:",
+  accountData,
+);
+
+const updatedUserResponse =
+  await updateProfile(accountData);
+
+console.log(
+  "Account profile updated:",
+  updatedUserResponse,
+);
+
+const updatedUser: UserProfile = {
+  ...updatedUserResponse.user,
+
+  profileImage:
+    finalProfileImage ||
+    updatedUserResponse.user?.profileImage ||
+    "",
+};
+
+setUser(updatedUser);
+
+setFullName(
+  updatedUser.fullName ?? "",
+);
+
+setEmail(
+  updatedUser.email ?? "",
+);
+
+setPhone(
+  updatedUser.phone ?? "",
+);
+
+setGender(
+  updatedUser.gender ?? "",
+);
+
+setProfileImage(
+  updatedUser.profileImage ?? "",
+);
+
+      // =========================
+      // 3. UPDATE CUSTOMER
+      // =========================
+
+      if (
+        updatedUser.role ===
+        "CUSTOMER"
+      ) {
+        const data = {
+          address:
+            address.trim() ||
+            undefined,
+
+          city:
+            city.trim() ||
+            undefined,
+
+          district:
+            district.trim() ||
+            undefined,
+
+          postalCode:
+            postalCode.trim() ||
+            undefined,
+
+          latitude:
+            latitude.trim() !== ""
+              ? Number(latitude)
+              : undefined,
+
+          longitude:
+            longitude.trim() !== ""
+              ? Number(longitude)
+              : undefined,
+        };
+
+        console.log(
+          "Updating customer profile:",
+          data,
+        );
+
+        const updatedProfile =
+          await updateCustomerProfile(
+            data,
+          );
+
+        console.log(
+          "Customer profile updated:",
+          updatedProfile,
+        );
+
+        setCustomerProfile(
+          updatedProfile,
+        );
+
+        setAddress(
+          updatedProfile.address ??
+            "",
+        );
+
+        setCity(
+          updatedProfile.city ??
+            "",
+        );
+
+        setDistrict(
+          updatedProfile.district ??
+            "",
+        );
+
+        setPostalCode(
+          updatedProfile.postalCode ??
+            "",
+        );
+
+        setLatitude(
+          updatedProfile.latitude !==
+              null &&
+            updatedProfile.latitude !==
+              undefined
+            ? String(
+                updatedProfile.latitude,
+              )
+            : "",
+        );
+
+        setLongitude(
+          updatedProfile.longitude !==
+              null &&
+            updatedProfile.longitude !==
+              undefined
+            ? String(
+                updatedProfile.longitude,
+              )
+            : "",
+        );
+      }
+
+      // =========================
+      // 4. SUCCESS
+      // =========================
+
+      setSuccess(
+        "Profile updated successfully.",
       );
-
-      setCustomerProfile(updatedProfile);
-
-      setAddress(updatedProfile.address ?? "");
-      setCity(updatedProfile.city ?? "");
-      setDistrict(updatedProfile.district ?? "");
-      setPostalCode(updatedProfile.postalCode ?? "");
-
-      setLatitude(
-        updatedProfile.latitude !== null &&
-          updatedProfile.latitude !== undefined
-          ? String(updatedProfile.latitude)
-          : "",
-      );
-
-      setLongitude(
-        updatedProfile.longitude !== null &&
-          updatedProfile.longitude !== undefined
-          ? String(updatedProfile.longitude)
-          : "",
-      );
-
-      setSuccess("Profile updated successfully.");
 
       setEditMode(false);
     } catch (err: any) {
-      console.error("Profile update error:", err);
+      console.error(
+        "Profile update error:",
+        err,
+      );
 
       const message =
         err?.response?.data?.message ||
@@ -244,7 +615,9 @@ export default function ProfilePage() {
   if (loading) {
     return (
       <div style={styles.center}>
-        <p>Loading profile...</p>
+        <p>
+          Loading profile...
+        </p>
       </div>
     );
   }
@@ -256,7 +629,13 @@ export default function ProfilePage() {
   if (error && !user) {
     return (
       <div style={styles.center}>
-        <p style={{ color: "red" }}>{error}</p>
+        <p
+          style={{
+            color: "red",
+          }}
+        >
+          {error}
+        </p>
       </div>
     );
   }
@@ -268,10 +647,25 @@ export default function ProfilePage() {
   if (!user) {
     return (
       <div style={styles.center}>
-        <p>No profile data found.</p>
+        <p>
+          No profile data found.
+        </p>
       </div>
     );
   }
+
+  // =========================
+  // IMAGE URL
+  // =========================
+
+  const currentImageUrl =
+    getProfileImageUrl(
+      user.profileImage,
+    );
+
+  const previewImageUrl =
+    profileImagePreview ||
+    currentImageUrl;
 
   // =========================
   // PAGE
@@ -280,32 +674,53 @@ export default function ProfilePage() {
   return (
     <div style={styles.page}>
       <div style={styles.card}>
+
         {/* HEADER */}
 
         <div style={styles.header}>
           <div style={styles.avatar}>
-            {user.fullName
-              ?.charAt(0)
-              .toUpperCase()}
+            {currentImageUrl ? (
+              <img
+                src={currentImageUrl}
+                alt="Profile"
+                style={
+                  styles.avatarImage
+                }
+              />
+            ) : (
+              user.fullName
+                ?.charAt(0)
+                .toUpperCase()
+            )}
           </div>
 
           <div>
-            <h1 style={styles.title}>
+            <h1
+              style={styles.title}
+            >
               {user.fullName}
             </h1>
 
-            <p style={styles.email}>
+            <p
+              style={styles.email}
+            >
               {user.email}
             </p>
           </div>
         </div>
 
-        <div style={styles.divider}></div>
+        <div
+          style={styles.divider}
+        />
 
         {/* SUCCESS */}
 
         {success && (
-          <div style={styles.successBox}>
+          <div
+            style={
+              styles.successBox
+            }
+          >
             {success}
           </div>
         )}
@@ -313,79 +728,271 @@ export default function ProfilePage() {
         {/* ERROR */}
 
         {error && (
-          <div style={styles.errorBox}>
+          <div
+            style={styles.errorBox}
+          >
             {error}
           </div>
         )}
 
-        {/* USER INFORMATION */}
+        {/* ACCOUNT INFORMATION */}
 
-        <h2 style={styles.sectionTitle}>
+        <h2
+          style={
+            styles.sectionTitle
+          }
+        >
           Account Information
         </h2>
 
-        <div style={styles.grid}>
-          <ProfileItem
-            label="Full Name"
-            value={user.fullName}
-          />
+        {!editMode ? (
+          <div
+            style={styles.grid}
+          >
+            <ProfileItem
+              label="Full Name"
+              value={
+                user.fullName
+              }
+            />
 
-          <ProfileItem
-            label="Email"
-            value={user.email}
-          />
+            <ProfileItem
+              label="Email"
+              value={
+                user.email
+              }
+            />
 
-          <ProfileItem
-            label="Phone"
-            value={user.phone || "Not added"}
-          />
+            <ProfileItem
+              label="Phone"
+              value={
+                user.phone ||
+                "Not added"
+              }
+            />
 
-          <ProfileItem
-            label="Gender"
-            value={user.gender || "Not added"}
-          />
+            <ProfileItem
+              label="Gender"
+              value={
+                user.gender ||
+                "Not added"
+              }
+            />
 
-          <ProfileItem
-            label="Role"
-            value={user.role}
-          />
+            <ProfileItem
+              label="Role"
+              value={
+                user.role
+              }
+            />
 
-          <ProfileItem
-            label="Status"
-            value={user.status}
-          />
+            <ProfileItem
+              label="Status"
+              value={
+                user.status
+              }
+            />
 
-          <ProfileItem
-            label="Email Verified"
-            value={
-              user.emailVerified
-                ? "Verified"
-                : "Not Verified"
-            }
-          />
+            <ProfileItem
+              label="Email Verified"
+              value={
+                user.emailVerified
+                  ? "Verified"
+                  : "Not Verified"
+              }
+            />
 
-          <ProfileItem
-            label="Phone Verified"
-            value={
-              user.phoneVerified
-                ? "Verified"
-                : "Not Verified"
-            }
-          />
-        </div>
+            <ProfileItem
+              label="Phone Verified"
+              value={
+                user.phoneVerified
+                  ? "Verified"
+                  : "Not Verified"
+              }
+            />
+          </div>
+        ) : (
+          <div
+            style={styles.form}
+          >
+            <InputField
+              label="Full Name"
+              value={fullName}
+              onChange={
+                setFullName
+              }
+              placeholder="Enter your full name"
+            />
 
-        {/* CUSTOMER PROFILE */}
+            <InputField
+              label="Email"
+              value={email}
+              onChange={setEmail}
+              placeholder="Enter your email"
+            />
 
-        {user.role === "CUSTOMER" && (
+            <InputField
+              label="Phone"
+              value={phone}
+              onChange={setPhone}
+              placeholder="Enter your phone number"
+            />
+
+            {/* GENDER */}
+
+            <div
+              style={
+                styles.inputContainer
+              }
+            >
+              <label
+                style={
+                  styles.inputLabel
+                }
+              >
+                Gender
+              </label>
+
+              <select
+                value={gender}
+                onChange={(
+                  event,
+                ) => {
+                  setGender(
+                    event.target.value,
+                  );
+                }}
+                style={styles.input}
+              >
+                <option value="">
+                  Select Gender
+                </option>
+
+                <option value="MALE">
+                  Male
+                </option>
+
+                <option value="FEMALE">
+                  Female
+                </option>
+              </select>
+            </div>
+
+            {/* PROFILE IMAGE */}
+
+            <div
+              style={
+                styles.inputContainer
+              }
+            >
+              <label
+                style={
+                  styles.inputLabel
+                }
+              >
+                Profile Image
+              </label>
+
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(
+                  event,
+                ) => {
+                  const file =
+                    event.target
+                      .files?.[0] ??
+                    null;
+
+                  if (!file) {
+                    return;
+                  }
+
+                  if (
+                    !file.type.startsWith(
+                      "image/",
+                    )
+                  ) {
+                    setError(
+                      "Please select a valid image file.",
+                    );
+
+                    return;
+                  }
+
+                  setError("");
+
+                  setProfileImageFile(
+                    file,
+                  );
+                }}
+                style={styles.input}
+              />
+
+              {/* PREVIEW */}
+
+              {previewImageUrl && (
+                <div
+                  style={
+                    styles.previewContainer
+                  }
+                >
+                  <img
+                    src={
+                      previewImageUrl
+                    }
+                    alt="Profile preview"
+                    style={
+                      styles.previewImage
+                    }
+                  />
+
+                  <div>
+                    <p
+                      style={
+                        styles.previewTitle
+                      }
+                    >
+                      Image Preview
+                    </p>
+
+                    <p
+                      style={
+                        styles.previewText
+                      }
+                    >
+                      {profileImageFile
+                        ? "This image will be uploaded as your profile picture."
+                        : "Current profile picture"}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* CUSTOMER INFORMATION */}
+
+        {user.role ===
+          "CUSTOMER" && (
           <>
-            <div style={styles.divider}></div>
+            <div
+              style={styles.divider}
+            />
 
-            <h2 style={styles.sectionTitle}>
+            <h2
+              style={
+                styles.sectionTitle
+              }
+            >
               Customer Information
             </h2>
 
             {!editMode ? (
-              <div style={styles.grid}>
+              <div
+                style={styles.grid}
+              >
                 <ProfileItem
                   label="Address"
                   value={
@@ -422,7 +1029,7 @@ export default function ProfilePage() {
                   label="Latitude"
                   value={
                     customerProfile?.latitude !==
-                    null &&
+                      null &&
                     customerProfile?.latitude !==
                       undefined
                       ? String(
@@ -436,7 +1043,7 @@ export default function ProfilePage() {
                   label="Longitude"
                   value={
                     customerProfile?.longitude !==
-                    null &&
+                      null &&
                     customerProfile?.longitude !==
                       undefined
                       ? String(
@@ -447,11 +1054,15 @@ export default function ProfilePage() {
                 />
               </div>
             ) : (
-              <div style={styles.form}>
+              <div
+                style={styles.form}
+              >
                 <InputField
                   label="Address"
                   value={address}
-                  onChange={setAddress}
+                  onChange={
+                    setAddress
+                  }
                   placeholder="Enter your address"
                 />
 
@@ -465,21 +1076,27 @@ export default function ProfilePage() {
                 <InputField
                   label="District"
                   value={district}
-                  onChange={setDistrict}
+                  onChange={
+                    setDistrict
+                  }
                   placeholder="Enter your district"
                 />
 
                 <InputField
                   label="Postal Code"
                   value={postalCode}
-                  onChange={setPostalCode}
+                  onChange={
+                    setPostalCode
+                  }
                   placeholder="Enter 5 digit postal code"
                 />
 
                 <InputField
                   label="Latitude"
                   value={latitude}
-                  onChange={setLatitude}
+                  onChange={
+                    setLatitude
+                  }
                   placeholder="Example: 6.927079"
                   type="number"
                 />
@@ -487,7 +1104,9 @@ export default function ProfilePage() {
                 <InputField
                   label="Longitude"
                   value={longitude}
-                  onChange={setLongitude}
+                  onChange={
+                    setLongitude
+                  }
                   placeholder="Example: 79.861244"
                   type="number"
                 />
@@ -498,31 +1117,51 @@ export default function ProfilePage() {
 
         {/* BUTTONS */}
 
-        <div style={styles.buttonContainer}>
+        <div
+          style={
+            styles.buttonContainer
+          }
+        >
           {!editMode ? (
             <button
               type="button"
-              onClick={handleEditProfile}
-              style={styles.editButton}
+              onClick={
+                handleEditProfile
+              }
+              style={
+                styles.editButton
+              }
             >
               Edit Profile
             </button>
           ) : (
-            <div style={styles.buttonGroup}>
+            <div
+              style={
+                styles.buttonGroup
+              }
+            >
               <button
                 type="button"
-                onClick={handleCancel}
+                onClick={
+                  handleCancel
+                }
                 disabled={saving}
-                style={styles.cancelButton}
+                style={
+                  styles.cancelButton
+                }
               >
                 Cancel
               </button>
 
               <button
                 type="button"
-                onClick={handleSave}
+                onClick={
+                  handleSave
+                }
                 disabled={saving}
-                style={styles.saveButton}
+                style={
+                  styles.saveButton
+                }
               >
                 {saving
                   ? "Saving..."
@@ -549,9 +1188,17 @@ function ProfileItem({
 }) {
   return (
     <div style={styles.item}>
-      <p style={styles.label}>{label}</p>
+      <p
+        style={styles.label}
+      >
+        {label}
+      </p>
 
-      <p style={styles.value}>{value}</p>
+      <p
+        style={styles.value}
+      >
+        {value}
+      </p>
     </div>
   );
 }
@@ -569,23 +1216,39 @@ function InputField({
 }: {
   label: string;
   value: string;
-  onChange: (value: string) => void;
+  onChange: (
+    value: string,
+  ) => void;
   placeholder: string;
   type?: string;
 }) {
   return (
-    <div style={styles.inputContainer}>
-      <label style={styles.inputLabel}>
+    <div
+      style={
+        styles.inputContainer
+      }
+    >
+      <label
+        style={
+          styles.inputLabel
+        }
+      >
         {label}
       </label>
 
       <input
         type={type}
         value={value}
-        onChange={(event) =>
-          onChange(event.target.value)
+        onChange={(
+          event,
+        ) =>
+          onChange(
+            event.target.value,
+          )
         }
-        placeholder={placeholder}
+        placeholder={
+          placeholder
+        }
         style={styles.input}
       />
     </div>
@@ -638,6 +1301,17 @@ const styles = {
     justifyContent: "center",
     fontSize: "32px",
     fontWeight: "700",
+    overflow: "hidden",
+    flexShrink: 0,
+  },
+
+  avatarImage: {
+    width: "100%",
+    height: "100%",
+    borderRadius: "50%",
+    objectFit: "cover" as const,
+    display: "block",
+    objectPosition: "center top",
   },
 
   title: {
@@ -665,7 +1339,8 @@ const styles = {
 
   grid: {
     display: "grid",
-    gridTemplateColumns: "1fr 1fr",
+    gridTemplateColumns:
+      "1fr 1fr",
     gap: "20px",
   },
 
@@ -673,7 +1348,8 @@ const styles = {
     padding: "18px",
     background: "#f8fafc",
     borderRadius: "10px",
-    border: "1px solid #e5e7eb",
+    border:
+      "1px solid #e5e7eb",
   },
 
   label: {
@@ -693,13 +1369,15 @@ const styles = {
 
   form: {
     display: "grid",
-    gridTemplateColumns: "1fr 1fr",
+    gridTemplateColumns:
+      "1fr 1fr",
     gap: "20px",
   },
 
   inputContainer: {
     display: "flex",
-    flexDirection: "column" as const,
+    flexDirection:
+      "column" as const,
     gap: "8px",
   },
 
@@ -711,20 +1389,60 @@ const styles = {
 
   input: {
     width: "100%",
-    boxSizing: "border-box" as const,
-    border: "1px solid #d1d5db",
+    boxSizing:
+      "border-box" as const,
+    border:
+      "1px solid #d1d5db",
     borderRadius: "8px",
-    padding: "12px 14px",
+    padding:
+      "12px 14px",
     fontSize: "15px",
     color: "#111827",
     outline: "none",
     background: "#ffffff",
   },
 
+  previewContainer: {
+    display: "flex",
+    alignItems: "center",
+    gap: "15px",
+    marginTop: "10px",
+    padding: "12px",
+    background: "#f8fafc",
+    border:
+      "1px solid #e5e7eb",
+    borderRadius: "10px",
+  },
+
+  previewImage: {
+    width: "70px",
+    height: "70px",
+    borderRadius: "50%",
+    objectFit:
+      "cover" as const,
+    border:
+      "2px solid #e5e7eb",
+  },
+
+  previewTitle: {
+    margin: 0,
+    fontSize: "14px",
+    fontWeight: "600",
+    color: "#111827",
+  },
+
+  previewText: {
+    marginTop: "5px",
+    marginBottom: 0,
+    fontSize: "13px",
+    color: "#64748b",
+  },
+
   buttonContainer: {
     marginTop: "30px",
     display: "flex",
-    justifyContent: "flex-end",
+    justifyContent:
+      "flex-end",
   },
 
   buttonGroup: {
@@ -737,7 +1455,8 @@ const styles = {
     color: "#ffffff",
     border: "none",
     borderRadius: "8px",
-    padding: "12px 24px",
+    padding:
+      "12px 24px",
     fontSize: "15px",
     fontWeight: "600",
     cursor: "pointer",
@@ -748,7 +1467,8 @@ const styles = {
     color: "#ffffff",
     border: "none",
     borderRadius: "8px",
-    padding: "12px 24px",
+    padding:
+      "12px 24px",
     fontSize: "15px",
     fontWeight: "600",
     cursor: "pointer",
@@ -759,7 +1479,8 @@ const styles = {
     color: "#ffffff",
     border: "none",
     borderRadius: "8px",
-    padding: "12px 24px",
+    padding:
+      "12px 24px",
     fontSize: "15px",
     fontWeight: "600",
     cursor: "pointer",
@@ -767,18 +1488,22 @@ const styles = {
 
   successBox: {
     background: "#ecfdf5",
-    border: "1px solid #86efac",
+    border:
+      "1px solid #86efac",
     color: "#166534",
-    padding: "12px 16px",
+    padding:
+      "12px 16px",
     borderRadius: "8px",
     marginBottom: "20px",
   },
 
   errorBox: {
     background: "#fef2f2",
-    border: "1px solid #fecaca",
+    border:
+      "1px solid #fecaca",
     color: "#dc2626",
-    padding: "12px 16px",
+    padding:
+      "12px 16px",
     borderRadius: "8px",
     marginBottom: "20px",
   },
