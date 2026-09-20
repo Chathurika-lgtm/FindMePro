@@ -135,12 +135,14 @@ async uploadProfileImage(
     );
   }
 
+  const profileImage = `/uploads/workers/${filename}`;
+
   return this.prisma.user.update({
     where: {
       id: userId,
     },
     data: {
-      profileImage: filename,
+      profileImage,
     },
     select: {
       id: true,
@@ -639,4 +641,111 @@ async deleteAvailability(
     message: 'Availability deleted successfully',
   };
 }
+async getPublicWorkers() {
+  return this.prisma.workerProfile.findMany({
+    where: {
+      verificationStatus: 'APPROVED',
+      isAvailable: true,
+      user: {
+        status: 'ACTIVE',
+      },
+    },
+
+    include: {
+      user: {
+        select: {
+          id: true,
+          fullName: true,
+          phone: true,
+          profileImage: true,
+          status: true,
+        },
+      },
+
+      services: {
+        where: {
+          isActive: true,
+        },
+        include: {
+          category: true,
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      },
+
+      skills: {
+        include: {
+          skill: true,
+        },
+      },
+    },
+
+    orderBy: [
+      {
+        averageRating: 'desc',
+      },
+      {
+        createdAt: 'desc',
+      },
+    ],
+  });
+
+}
+
+async getPublicWorkerById(workerId: string) {
+  const worker = await this.prisma.workerProfile.findFirst({
+    where: {
+      id: workerId,
+      verificationStatus: 'APPROVED',
+      isAvailable: true,
+      user: {
+        status: 'ACTIVE',
+      },
+    },
+
+    include: {
+      user: {
+        select: {
+          id: true,
+          fullName: true,
+          phone: true,
+          profileImage: true,
+          status: true,
+        },
+      },
+
+      services: {
+        where: {
+          isActive: true,
+        },
+        include: {
+          category: true,
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      },
+
+      skills: {
+        include: {
+          skill: true,
+        },
+      },
+
+      gallery: true,
+
+      availability: true,
+    },
+  });
+
+  if (!worker) {
+    throw new BadRequestException(
+      'Worker not found',
+    );
+  }
+
+  return worker;
+}
+
 }
