@@ -6,7 +6,6 @@ import {
   ArrowLeft,
   Star,
   BriefcaseBusiness,
-  Clock3,
   CheckCircle2,
   Phone,
   Image as ImageIcon,
@@ -75,6 +74,7 @@ export default function WorkerDetailsPage() {
         setWorker(data);
       } catch (err) {
         console.error("Failed to load worker:", err);
+
         setError(
           "Failed to load worker details. Please try again.",
         );
@@ -209,6 +209,7 @@ export default function WorkerDetailsPage() {
             <section style={styles.card}>
               <div style={styles.sectionTitleRow}>
                 <BriefcaseBusiness size={19} />
+
                 <h2 style={styles.sectionTitle}>
                   About Worker
                 </h2>
@@ -256,6 +257,7 @@ export default function WorkerDetailsPage() {
             <section style={styles.card}>
               <div style={styles.sectionTitleRow}>
                 <BriefcaseBusiness size={19} />
+
                 <h2 style={styles.sectionTitle}>
                   Services
                 </h2>
@@ -304,6 +306,7 @@ export default function WorkerDetailsPage() {
             <section style={styles.card}>
               <div style={styles.sectionTitleRow}>
                 <CheckCircle2 size={19} />
+
                 <h2 style={styles.sectionTitle}>
                   Skills
                 </h2>
@@ -331,6 +334,7 @@ export default function WorkerDetailsPage() {
             <section style={styles.card}>
               <div style={styles.sectionTitleRow}>
                 <ImageIcon size={19} />
+
                 <h2 style={styles.sectionTitle}>
                   Work Gallery
                 </h2>
@@ -349,7 +353,9 @@ export default function WorkerDetailsPage() {
                     >
                       <img
                         src={getImageUrl(image.imageUrl)}
-                        alt={image.title || "Worker work"}
+                        alt={
+                          image.title || "Worker work"
+                        }
                         style={styles.galleryImage}
                       />
 
@@ -407,6 +413,7 @@ export default function WorkerDetailsPage() {
             <section style={styles.card}>
               <div style={styles.sectionTitleRow}>
                 <CalendarDays size={19} />
+
                 <h2 style={styles.sectionTitle}>
                   Availability
                 </h2>
@@ -464,8 +471,8 @@ export default function WorkerDetailsPage() {
                 type="button"
                 style={styles.bookingButton}
                 onClick={() => {
-                  alert(
-                    "Booking feature will be added in the next step.",
+                  router.push(
+                    `/workers/${worker.id}/book`,
                   );
                 }}
               >

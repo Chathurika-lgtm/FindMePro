@@ -8,64 +8,89 @@ export default function RegisterPage() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [role, setRole] = useState<"CUSTOMER" | "WORKER">(
+    "CUSTOMER",
+  );
+
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
   const router = useRouter();
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-  e.preventDefault();
+  const handleSubmit = async (
+    e: FormEvent<HTMLFormElement>,
+  ) => {
+    e.preventDefault();
 
-  setError("");
-  setSuccess("");
+    setError("");
+    setSuccess("");
 
-  if (!fullName.trim()) {
-    setError("Full name is required.");
-    return;
-  }
+    // Full name validation
+    if (!fullName.trim()) {
+      setError("Full name is required.");
+      return;
+    }
 
-  if (!email.trim()) {
-    setError("Email is required.");
-    return;
-  }
+    // Email validation
+    if (!email.trim()) {
+      setError("Email is required.");
+      return;
+    }
 
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const emailRegex =
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-  if (!emailRegex.test(email)) {
-    setError("Please enter a valid email address.");
-    return;
-  }
+    if (!emailRegex.test(email)) {
+      setError("Please enter a valid email address.");
+      return;
+    }
 
-  if (!password.trim()) {
-    setError("Password is required.");
-    return;
-  }
+    // Password validation
+    if (!password.trim()) {
+      setError("Password is required.");
+      return;
+    }
 
-  if (password.length < 8) {
-    setError("Password must be at least 8 characters.");
-    return;
-  }
+    if (password.length < 8) {
+      setError(
+        "Password must be at least 8 characters.",
+      );
+      return;
+    }
 
-  try {
-    const response = await register({
-      fullName: fullName.trim(),
-      email: email.trim(),
-      password,
-    });
+    // Role validation
+    if (!role) {
+      setError("Please select a role.");
+      return;
+    }
 
-    setSuccess("Registration successful! Redirecting to login...");
+    try {
+      await register({
+        fullName: fullName.trim(),
+        email: email.trim(),
+        password,
+        role,
+      });
 
-setTimeout(() => {
-  router.push("/login");
-}, 1500);
-  } catch (error: any) {
-    console.error("Registration failed:", error);
+      setSuccess(
+        "Registration successful! Redirecting to login...",
+      );
 
-    setError(
-      error?.response?.data?.message ||
-        "Registration failed. Please try again.",
-    );
-  }
-};
+      setTimeout(() => {
+        router.push("/login");
+      }, 1500);
+    } catch (error: any) {
+      console.error(
+        "Registration failed:",
+        error,
+      );
+
+      setError(
+        error?.response?.data?.message ||
+          "Registration failed. Please try again.",
+      );
+    }
+  };
 
   return (
     <main
@@ -85,7 +110,8 @@ setTimeout(() => {
           backgroundColor: "#ffffff",
           padding: "35px",
           borderRadius: "12px",
-          boxShadow: "0 4px 20px rgba(0, 0, 0, 0.08)",
+          boxShadow:
+            "0 4px 20px rgba(0, 0, 0, 0.08)",
         }}
       >
         <h1
@@ -110,20 +136,23 @@ setTimeout(() => {
         </p>
 
         <form onSubmit={handleSubmit}>
-            {success && (
-  <div
-    style={{
-      marginBottom: "20px",
-      padding: "12px",
-      backgroundColor: "#dcfce7",
-      color: "#166534",
-      borderRadius: "8px",
-      fontSize: "14px",
-    }}
-  >
-    {success}
-  </div>
-)}
+          {/* Success Message */}
+          {success && (
+            <div
+              style={{
+                marginBottom: "20px",
+                padding: "12px",
+                backgroundColor: "#dcfce7",
+                color: "#166534",
+                borderRadius: "8px",
+                fontSize: "14px",
+              }}
+            >
+              {success}
+            </div>
+          )}
+
+          {/* Error Message */}
           {error && (
             <div
               style={{
@@ -139,6 +168,7 @@ setTimeout(() => {
             </div>
           )}
 
+          {/* Full Name */}
           <div style={{ marginBottom: "18px" }}>
             <label
               htmlFor="fullName"
@@ -156,7 +186,9 @@ setTimeout(() => {
               id="fullName"
               type="text"
               value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
+              onChange={(e) =>
+                setFullName(e.target.value)
+              }
               placeholder="Enter your full name"
               style={{
                 width: "100%",
@@ -170,6 +202,7 @@ setTimeout(() => {
             />
           </div>
 
+          {/* Email */}
           <div style={{ marginBottom: "18px" }}>
             <label
               htmlFor="email"
@@ -187,7 +220,9 @@ setTimeout(() => {
               id="email"
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) =>
+                setEmail(e.target.value)
+              }
               placeholder="Enter your email"
               style={{
                 width: "100%",
@@ -201,6 +236,52 @@ setTimeout(() => {
             />
           </div>
 
+          {/* Role */}
+          <div style={{ marginBottom: "18px" }}>
+            <label
+              htmlFor="role"
+              style={{
+                display: "block",
+                marginBottom: "7px",
+                fontWeight: "600",
+                color: "#374151",
+              }}
+            >
+              Register As
+            </label>
+
+            <select
+              id="role"
+              value={role}
+              onChange={(e) =>
+                setRole(
+                  e.target.value as
+                    | "CUSTOMER"
+                    | "WORKER",
+                )
+              }
+              style={{
+                width: "100%",
+                padding: "12px",
+                border: "1px solid #d1d5db",
+                borderRadius: "8px",
+                fontSize: "15px",
+                color: "#1f2937",
+                backgroundColor: "#ffffff",
+                boxSizing: "border-box",
+              }}
+            >
+              <option value="CUSTOMER">
+                Customer
+              </option>
+
+              <option value="WORKER">
+                Worker
+              </option>
+            </select>
+          </div>
+
+          {/* Password */}
           <div style={{ marginBottom: "25px" }}>
             <label
               htmlFor="password"
@@ -218,7 +299,9 @@ setTimeout(() => {
               id="password"
               type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) =>
+                setPassword(e.target.value)
+              }
               placeholder="Enter your password"
               style={{
                 width: "100%",
@@ -232,6 +315,7 @@ setTimeout(() => {
             />
           </div>
 
+          {/* Submit Button */}
           <button
             type="submit"
             style={{
@@ -250,6 +334,7 @@ setTimeout(() => {
           </button>
         </form>
 
+        {/* Login Link */}
         <p
           style={{
             textAlign: "center",

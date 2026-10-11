@@ -25,36 +25,6 @@ export interface WorkerSkill {
   };
 }
 
-export interface PublicWorker {
-  id: string;
-  userId: string;
-  bio: string | null;
-  experienceYears: number;
-  averageRating: number;
-  totalReviews: number;
-  completedJobs: number;
-  verificationStatus: string;
-  isAvailable: boolean;
-  user: {
-    id: string;
-    fullName: string;
-    phone: string | null;
-    profileImage: string | null;
-    status: string;
-  };
-  services: WorkerService[];
-  skills: WorkerSkill[];
-
-  gallery: WorkerGallery[];
-  availability: WorkerAvailability[];
-}
-
-export const getPublicWorkers = async (): Promise<PublicWorker[]> => {
-  const response = await api.get<PublicWorker[]>("/worker/public");
-
-  return response.data;
-};
-
 export interface WorkerGallery {
   id: string;
   workerId: string;
@@ -75,13 +45,100 @@ export interface WorkerAvailability {
   createdAt: string;
 }
 
+export interface PublicWorker {
+  id: string;
+  userId: string;
+  bio: string | null;
+  experienceYears: number;
+  averageRating: number;
+  totalReviews: number;
+  completedJobs: number;
+  verificationStatus: string;
+  isAvailable: boolean;
 
+  user: {
+    id: string;
+    fullName: string;
+    phone: string | null;
+    profileImage: string | null;
+    status: string;
+  };
+
+  services: WorkerService[];
+  skills: WorkerSkill[];
+  gallery: WorkerGallery[];
+  availability: WorkerAvailability[];
+}
+
+/**
+ * Get public workers.
+ *
+ * When a service is provided, the backend filters workers
+ * by that service category.
+ *
+ * Examples:
+ * getPublicWorkers()
+ * getPublicWorkers("Electrician")
+ * getPublicWorkers("Plumber")
+ */
+export const getPublicWorkers = async (
+  service?: string,
+): Promise<PublicWorker[]> => {
+  const trimmedService = service?.trim();
+
+  const response = await api.get<PublicWorker[]>("/worker/public", {
+    params: trimmedService
+      ? {
+          service: trimmedService,
+        }
+      : undefined,
+  });
+
+  return response.data;
+};
+
+/**
+ * Get a single worker's public profile.
+ */
 export const getPublicWorkerById = async (
   workerId: string,
 ): Promise<PublicWorker> => {
   const response = await api.get<PublicWorker>(
     `/worker/public/${workerId}`,
   );
+
+  return response.data;
+};
+
+/**
+ * Get the currently authenticated worker's profile.
+ */
+export const getWorkerProfile = async () => {
+  const response = await api.get("/worker/profile");
+
+  return response.data;
+};
+
+export interface WorkerServiceCategory {
+  id: string;
+  name: string;
+  description: string | null;
+  icon: string | null;
+  slug: string;
+}
+
+export const getWorkerCategories = async (): Promise<
+  WorkerServiceCategory[]
+> => {
+  const response = await api.get<WorkerServiceCategory[]>(
+    "/worker/categories",
+  );
+
+  return response.data;
+};
+
+export const getMyWorkerServices = async (): Promise<WorkerService[]> => {
+  const response = await api.get<WorkerService[]>("/worker/services");
 
   return response.data;
 };

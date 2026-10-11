@@ -1,16 +1,29 @@
 import api from "@/lib/axios";
 import { setToken } from "@/lib/token";
 
+// =========================
+// REGISTER DATA
+// =========================
+
 export interface RegisterData {
   fullName: string;
   email: string;
   password: string;
+  role: "CUSTOMER" | "WORKER";
 }
+
+// =========================
+// LOGIN DATA
+// =========================
 
 export interface LoginData {
   email: string;
   password: string;
 }
+
+// =========================
+// UPDATE PROFILE DATA
+// =========================
 
 export interface UpdateProfileData {
   fullName?: string;
@@ -20,23 +33,44 @@ export interface UpdateProfileData {
   profileImage?: string;
 }
 
+// =========================
+// AUTH USER
+// =========================
+
 export interface AuthUser {
   id: string;
   fullName: string;
   email: string;
   phone: string | null;
+
   role: "ADMIN" | "WORKER" | "CUSTOMER";
+
   status: "ACTIVE" | "INACTIVE";
+
   gender?: string | null;
+
   profileImage?: string | null;
+
   emailVerified?: boolean;
+
   phoneVerified?: boolean;
+
   lastLogin?: string | null;
+
   createdAt?: string;
+
   updatedAt?: string;
+
   deletedAt?: string | null;
+
   customerProfile?: unknown;
+
+  workerProfile?: unknown;
 }
+
+// =========================
+// LOGIN USER
+// =========================
 
 export interface LoginUser {
   id: string;
@@ -45,10 +79,18 @@ export interface LoginUser {
   role: "ADMIN" | "WORKER" | "CUSTOMER";
 }
 
+// =========================
+// REGISTER RESPONSE
+// =========================
+
 export interface RegisterResponse {
   message: string;
   user: AuthUser;
 }
+
+// =========================
+// LOGIN RESPONSE
+// =========================
 
 export interface LoginResponse {
   message: string;
@@ -63,10 +105,11 @@ export interface LoginResponse {
 export const register = async (
   data: RegisterData,
 ): Promise<RegisterResponse> => {
-  const response = await api.post<RegisterResponse>(
-    "/auth/register",
-    data,
-  );
+  const response =
+    await api.post<RegisterResponse>(
+      "/auth/register",
+      data,
+    );
 
   return response.data;
 };
@@ -78,10 +121,11 @@ export const register = async (
 export const login = async (
   data: LoginData,
 ): Promise<LoginResponse> => {
-  const response = await api.post<LoginResponse>(
-    "/auth/login",
-    data,
-  );
+  const response =
+    await api.post<LoginResponse>(
+      "/auth/login",
+      data,
+    );
 
   setToken(response.data.accessToken);
 
@@ -93,7 +137,9 @@ export const login = async (
 // =========================
 
 export const getProfile = async () => {
-  const response = await api.get("/auth/profile");
+  const response = await api.get(
+    "/auth/profile",
+  );
 
   return response.data;
 };
@@ -112,6 +158,10 @@ export const updateProfile = async (
 
   return response.data;
 };
+
+// =========================
+// UPLOAD PROFILE IMAGE
+// =========================
 
 export const uploadProfileImage = async (
   file: File,
@@ -132,12 +182,15 @@ export const uploadProfileImage = async (
 
   return response.data;
 };
+
 // =========================
 // ADMIN
 // =========================
 
 export const getAdminData = async () => {
-  const response = await api.get("/auth/admin");
+  const response = await api.get(
+    "/auth/admin",
+  );
 
   return response.data;
 };
@@ -147,7 +200,9 @@ export const getAdminData = async () => {
 // =========================
 
 export const getCustomerData = async () => {
-  const response = await api.get("/auth/customer");
+  const response = await api.get(
+    "/auth/customer",
+  );
 
   return response.data;
 };
@@ -157,7 +212,9 @@ export const getCustomerData = async () => {
 // =========================
 
 export const getWorkerData = async () => {
-  const response = await api.get("/auth/worker");
+  const response = await api.get(
+    "/auth/worker",
+  );
 
   return response.data;
 };
@@ -167,7 +224,9 @@ export const getWorkerData = async () => {
 // =========================
 
 export const getDashboard = async () => {
-  const response = await api.get("/auth/dashboard");
+  const response = await api.get(
+    "/auth/dashboard",
+  );
 
   return response.data;
 };

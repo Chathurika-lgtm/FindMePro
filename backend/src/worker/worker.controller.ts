@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  Query,
   Post,
   Put,
   UploadedFile,
@@ -27,6 +28,7 @@ import { UserRole } from '@prisma/client';
 import { UpdateWorkerProfileDto } from './dto/update-worker-profile.dto';
 import { UpdateWorkerSkillsDto } from './dto/update-worker-skills.dto';
 import { CreateWorkerServiceDto } from './dto/create-worker-service.dto';
+import { UpdateWorkerServiceDto } from './dto/update-worker-service.dto';
 import { CreateWorkerGalleryDto } from './dto/create-worker-gallery.dto';
 import { UpdateWorkerGalleryDto } from './dto/update-worker-gallery.dto';
 import { CreateWorkerAvailabilityDto } from './dto/create-worker-availability.dto';
@@ -142,10 +144,24 @@ export class WorkerController {
     );
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(UserRole.WORKER)
+@Get('skills/options')
+getAvailableSkills() {
+  return this.workerService.getAvailableSkills();
+}
+
   // =========================================================
   // WORKER SERVICES
   // =========================================================
 
+
+    @UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(UserRole.WORKER)
+@Get('categories')
+getActiveCategories() {
+  return this.workerService.getActiveCategories();
+}
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.WORKER)
   @Post('services')
@@ -159,6 +175,29 @@ export class WorkerController {
     );
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(UserRole.WORKER)
+@Get('services')
+getMyServices(
+  @CurrentUser() user: any,
+) {
+  return this.workerService.getMyServices(
+    user.id,
+  );
+}
+
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(UserRole.WORKER)
+@Delete('services/:serviceId')
+deleteWorkerService(
+  @CurrentUser() user: any,
+  @Param('serviceId') serviceId: string,
+) {
+  return this.workerService.deleteWorkerService(
+    user.id,
+    serviceId,
+  );
+}
   // =========================================================
   // WORKER GALLERY
   // =========================================================
@@ -303,10 +342,17 @@ export class WorkerController {
   // PUBLIC WORKERS
   // =========================================================
 
-  @Get('public')
-  getPublicWorkers() {
-    return this.workerService.getPublicWorkers();
-  }
+@Get('public')
+getPublicWorkers(
+  @Query('service') service?: string,
+) {
+  return this.workerService.getPublicWorkers(
+    service,
+  );
+}
+
+
+
   @Get('public/:workerId')
 getPublicWorkerById(
   @Param('workerId') workerId: string,
@@ -315,4 +361,21 @@ getPublicWorkerById(
     workerId,
   );
 }
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(UserRole.WORKER)
+@Put('services/:serviceId')
+updateWorkerService(
+  @CurrentUser() user: any,
+  @Param('serviceId') serviceId: string,
+  @Body() dto: UpdateWorkerServiceDto,
+) {
+  return this.workerService.updateWorkerService(
+    user.id,
+    serviceId,
+    dto,
+  );
+  
+}
+
+
 }
