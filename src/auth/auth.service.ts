@@ -31,6 +31,7 @@ export class AuthService {
       fullName,
       email,
       password,
+      role,
     } = registerDto;
 
     // Check existing user
@@ -51,22 +52,35 @@ export class AuthService {
     const hashedPassword =
       await bcrypt.hash(password, 10);
 
-    // Create customer user
+    // Create user
     const user =
       await this.prisma.user.create({
         data: {
           fullName,
           email,
           password: hashedPassword,
-          role: UserRole.CUSTOMER,
+          role,
 
-          customerProfile: {
-            create: {},
-          },
+          // Create Customer Profile
+          // only when registering as CUSTOMER
+          ...(role === UserRole.CUSTOMER && {
+            customerProfile: {
+              create: {},
+            },
+          }),
+
+          // Create Worker Profile
+          // only when registering as WORKER
+          ...(role === UserRole.WORKER && {
+            workerProfile: {
+              create: {},
+            },
+          }),
         },
 
         include: {
           customerProfile: true,
+          workerProfile: true,
         },
       });
 
@@ -89,8 +103,12 @@ export class AuthService {
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
         deletedAt: user.deletedAt,
+
         customerProfile:
           user.customerProfile,
+
+        workerProfile:
+          user.workerProfile,
       },
     };
   }
@@ -123,6 +141,7 @@ export class AuthService {
           deletedAt: true,
 
           customerProfile: true,
+          workerProfile: true,
         },
       });
 
@@ -225,6 +244,7 @@ export class AuthService {
           deletedAt: true,
 
           customerProfile: true,
+          workerProfile: true,
         },
       });
 
@@ -286,6 +306,7 @@ export class AuthService {
           deletedAt: true,
 
           customerProfile: true,
+          workerProfile: true,
         },
       });
 
